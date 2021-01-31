@@ -108,8 +108,10 @@ def get_all_events():
     return response['Items']
     
 def get_others_list(start,stop):
-    start_time = str(arrow.now().shift(days=-1))
-    stop_time = str(arrow.get(stop).shift(years=2))
+    #start_time = str(arrow.now().shift(days=-1))
+    #stop_time = str(arrow.get(stop).shift(years=2))
+    start_time  = start
+    stop_time = stop
     print(start_time,stop_time)
     table = _get_database().Table(os.environ["DB_TABLE_NAME"])
     fe = Key('begin_time').between(start_time,stop_time);
@@ -141,7 +143,15 @@ def get_others_list(start,stop):
         if not name in sublist:
             print(part['duration'],len(part['duration']))
             if len(part['duration']) > 10:
-                pass
+                days = int(part['duration'].split(" day")[0])
+                part["begin"] = part["begin_time"]
+                part["begin_date"] = part["begin"].split("T")[0]
+                sl = part["duration"].split(", ")[1].split(":")
+                part["begin_time"] = part["begin"].split("T")[1].split("+")[0]
+                part["end_time"] = str(arrow.get(part["begin"]).shift(hours=24*days+int(sl[0]),minutes=int(sl[1]),seconds=int(sl[2]))).split("T")[1].split("+")[0]
+                part["time_duration"] = part["begin_time"] + "～" + part["end_time"]
+                part["duration"] = str(days*24+int(sl[0]))+":"+sl[1] + ":" + sl[2]
+                summary_output_list.append(part)
             else:
                 part["begin"] = part["begin_time"]
                 part["begin_date"] = part["begin"].split("T")[0]
